@@ -2,6 +2,7 @@ import { isIndex, pending, range, seeded, won } from '../engine/core'
 import type { Challenge, Game } from '../engine/core'
 import { campaignVariant } from '../engine/campaign'
 import { extraTitles } from './bank'
+import { nimTask } from '../engine/lessons'
 
 export type NimRule = 'normal' | 'misere' | 'bounded'
 export interface NimLevel extends Challenge { piles: number[]; rule: NimRule; limit: number }
@@ -58,9 +59,7 @@ export const nim: Game<NimState, NimMove, NimLevel, ReturnType<typeof optimalNim
     const opening = setups[rank][variant - 1]
     const level: NimLevel = {
       title: extraTitles.nim[rank][variant - 1] ?? ['Nước đi mở màn', 'Giữ thế sau mỗi lượt', 'Cân bằng nhiều đống', 'Viên đá cuối', 'Giới hạn lượt lấy'][rank],
-      goal: rule === 'misere' ? 'Ép đối thủ lấy viên đá cuối cùng.' : rule === 'bounded'
-        ? 'Mỗi lượt lấy từ 1 đến ' + limit + ' viên trong một đống. Hãy lấy viên đá cuối cùng.'
-        : 'Lấy viên đá cuối cùng trước đối thủ.',
+      goal: nimTask(rule),
       complexity: ['Nhận ra thế XOR bằng 0.', 'Tính XOR và duy trì thế cân bằng qua nhiều lượt.', 'Phân tích nhiều đống và các lựa chọn cùng lúc.', 'Luật misère đảo kết quả ở lượt cuối.', 'Xét phần dư theo modulo ' + (limit + 1) + ' để tìm các thế thua lặp lại.'][rank],
       piles: opening ? [...opening] : seed === 'arena' && rank === 0 ? [1, 2, 4] :
         range([3, 4, 5, 4, 5][rank]).map(() => roll.integer(2, [4, 7, 11, 5, 7][rank])),
@@ -90,7 +89,8 @@ export const nim: Game<NimState, NimMove, NimLevel, ReturnType<typeof optimalNim
   },
   solve: optimalFromState,
   hint(level, state, tier) {
-    if (tier === 1) return 'Hãy tìm một nước đẩy đối thủ vào thế mà mọi nước trả lời đều có thể bị phản công.'
+    if (tier === 1) return level.rule === 'misere' ? 'Thử hình dung lượt ngay trước khi hết đá. Bạn muốn để lại đúng một viên cho máy.'
+      : 'Hãy hình dung nước đáp của máy sau mỗi lựa chọn. Nếu nước của bạn để lại đúng một đống mà máy có thể lấy hết, máy sẽ thắng.'
     if (tier === 2) {
       if (level.rule === 'normal') return 'Ở Nim thường, XOR bằng 0 là thế thua của người sắp đi nếu đối thủ chơi tối ưu.'
       if (level.rule === 'misere') return 'Khi mỗi đống còn đúng một viên, người sắp đi thua nếu số đống lẻ.'
@@ -102,7 +102,7 @@ export const nim: Game<NimState, NimMove, NimLevel, ReturnType<typeof optimalNim
       : 'AI có thể giữ lợi thế từ thế này. Hãy xem lại nước đi trước bằng Hoàn tác.'
   },
   explain(level) {
-    if (level.rule === 'normal') return 'Từ XOR bằng 0, mọi nước hợp lệ làm XOR khác 0. Từ XOR khác 0, chọn một đống có bit 1 ở vị trí cao nhất của XOR. XOR kích thước đống với tổng XOR cho kích thước mới nhỏ hơn và đưa toàn bàn về 0.'
+    if (level.rule === 'normal') return 'XOR là cách cộng các chữ số nhị phân mà không nhớ. Ví dụ nếu còn hai đống có cùng số đá, XOR bằng 0. Bạn có thể đáp lại bằng cách lấy đúng số viên máy vừa lấy ở đống kia. Với nhiều đống, tìm nước đi đưa XOR về 0 sau lượt của bạn.'
     if (level.rule === 'misere') return 'Thế rỗng là thế thắng cho người kế tiếp vì đối thủ vừa lấy viên cuối. Xét lùi từ đó, một thế là thắng nếu có ít nhất một nước sang thế thua. Khi chỉ còn các đống một viên, hãy để lại số đống lẻ cho đối thủ.'
     const modulus = level.limit + 1
     return 'Với một đống, bội số ' + modulus + ' là thế thua vì có thể bù mỗi nước của đối thủ cho đủ ' + modulus +

@@ -12,6 +12,7 @@ import type { ModeInfo } from './engine/catalog'
 import type { Rank } from './engine/core'
 import { useProgress } from './engine/progressStore'
 import { numericAction } from './engine/session'
+import { describeLesson } from './engine/lessons'
 import { validSeed } from './engine/storage'
 import { BinaryBoard, CircleBoard, DominoBoard, GraphBoard, NimBoard, parseCircle, parseDomino } from './components/Boards'
 import { GameSession } from './components/GameSession'
@@ -47,7 +48,7 @@ function Play({ mode, rank, seed }: { mode: ModeInfo; rank: Rank; seed: string }
     <PageTitle title="Màn đang khóa" overline={mode.name}>Hoàn thành màn trước để mở cấp độ này.</PageTitle>
     <a className="btn btn-primary" href={'#/games/' + mode.id}>Xem các màn</a>
   </section>
-  const common = { mode, rank, seed }
+  const common = { mode, rank, seed, lesson: describeLesson }
   switch (mode.id) {
     case 'nim': return <GameSession {...common} game={games.nim} board={NimBoard} parse={value => numericAction(value, ['pile', 'take'])} />
     case 'circle': return <GameSession {...common} game={games.circle} board={CircleBoard} parse={parseCircle} />

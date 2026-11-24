@@ -1,5 +1,6 @@
 import { range, seeded } from '../engine/core'
 import type { Rank } from '../engine/core'
+import { dominoTask } from '../engine/lessons'
 import { boardCounts, parity, solveDomino } from '../games/domino'
 import type { DominoLevel, Tile } from '../games/domino'
 import { gridSignature, sample } from './sampling'
@@ -69,9 +70,8 @@ export function candidateDomino(rank: Rank, trial: number): Candidate<DominoLeve
   const [rows, cols] = options[random.integer(0, options.length - 1)]
   const objective = rank === 1 ? 'imbalance' : rank >= 3 ? 'hall' : 'tile'
   const level: DominoLevel = {
-    title: objective === 'tile' ? 'Phủ kín bàn khuyết' : objective === 'hall' ? 'Tìm chứng chỉ Hall' : 'Bất biến hai màu',
-    goal: objective === 'tile' ? 'Phủ hết các ô còn lại bằng domino 1 × 2.' : objective === 'hall'
-      ? 'Tìm tập S cùng màu có ít hàng xóm kề cạnh hơn số ô trong S.' : 'Chứng minh số ô hai màu khác nhau nên bàn không thể phủ kín.',
+    title: objective === 'tile' ? 'Phủ kín bàn khuyết' : objective === 'hall' ? 'Nhóm ô thiếu chỗ ghép' : 'So sánh số ô hai màu',
+    goal: dominoTask(objective),
     complexity: '', rows, cols, holes: [], objective,
   }
   const cells = range(rows * cols)

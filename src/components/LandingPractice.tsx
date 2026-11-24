@@ -19,7 +19,7 @@ export function BinaryPreview() {
       <span className="preview-count">3 × 3</span>
     </div>
     <h2 id="preview-title">Binary Matrix</h2>
-    <p className="preview-rule">Tắt hết đèn. Bấm một ô để đổi trạng thái của ô đó và các ô kề.</p>
+    <p className="preview-rule">Tắt hết đèn. Bấm một ô để đổi chính ô đó và các ô ngay trên, dưới, trái, phải.</p>
     <div className="preview-board" role="group" aria-label="Bàn đèn chơi thử">
       {state.lights.map((light, index) => <button key={index} type="button" aria-pressed={Boolean(light)}
         aria-label={'Đèn thử hàng ' + (Math.floor(index / 3) + 1) + ' cột ' + (index % 3 + 1)}

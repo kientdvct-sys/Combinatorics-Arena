@@ -1,5 +1,6 @@
 import { range, seeded } from '../engine/core'
 import type { Rank } from '../engine/core'
+import { graphTask } from '../engine/lessons'
 import { exactColor } from '../games/graph'
 import type { Edge, GraphLevel } from '../games/graph'
 import { sample } from './sampling'
@@ -56,8 +57,8 @@ export function candidateGraph(rank: Rank, trial: number): Candidate<GraphLevel>
   for (const index of sample(range(size), locks, random)) locked[order[index]] = planted[index]
   const level: GraphLevel = {
     title: locks ? 'Tô màu với đỉnh khóa' : 'Tô màu ít nhất',
-    goal: 'Tô mọi đỉnh bằng ít màu nhất và giữ đúng màu các đỉnh khóa.',
-    complexity: size + ' đỉnh · ' + edges.length + ' cạnh' + (locks ? ' · ' + locks + ' khóa' : ''),
+    goal: graphTask,
+    complexity: size + ' chấm · ' + edges.length + ' đường nối' + (locks ? ' · ' + locks + ' chấm đã khóa màu' : ''),
     size, edges, locked, palette: rank < 2 ? 4 : 5, phase: 0, family: 'generated', layout: 'circle',
   }
   if (exactColor(level)?.minimum !== colors) return

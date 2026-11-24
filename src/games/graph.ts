@@ -1,5 +1,6 @@
 import { isIndex, pending, range, seeded, won } from '../engine/core'
 import type { Challenge, Game } from '../engine/core'
+import { graphTask } from '../engine/lessons'
 import { campaignVariant } from '../engine/campaign'
 import { cycle, extraGraph, extraTitles, mycielski, wheel } from './bank'
 import type { GraphFamily, GraphLayout } from './bank'
@@ -100,7 +101,7 @@ export const graph: Game<GraphState, GraphAction, GraphLevel, ReturnType<typeof 
     const apexLinks = range(11).map((vertex): Edge => [vertex, 11])
     const level: GraphLevel = {
       title: extraTitles.graph[rank][variant - 1] ?? ['Chu trình lẻ', 'Hai phe đối diện', 'Bánh xe bảy nan', 'Đồ thị Grötzsch', 'Đỉnh phổ dụng'][rank],
-      goal: 'Tô mọi đỉnh bằng ít màu nhất. Hai đỉnh nối nhau phải khác màu.',
+      goal: graphTask,
       complexity: graphFocus[extra?.family ?? defaultFamilies[rank]],
       size, edges: extra?.edges ?? [cycle(5), crown, wheelEdges, lifted, [...lifted, ...apexLinks]][rank],
       locked: extra?.locked ?? {}, palette: [4, 4, 4, 5, 5][rank], phase,
@@ -131,11 +132,12 @@ export const graph: Game<GraphState, GraphAction, GraphLevel, ReturnType<typeof 
     return colors.map((old, index) => index === vertex ? color : old)
   },
   validate(level, colors) {
-    if (colors.length !== level.size || colors.some(color => !isIndex(color, level.palette))) return pending('Hãy tô màu tất cả các đỉnh.')
+    const unpainted = level.size - colors.filter(color => isIndex(color, level.palette)).length
+    if (colors.length !== level.size || unpainted) return pending('Hãy tô ' + unpainted + ' chấm còn trống, sau đó kiểm tra các đường nối.')
     if (Object.entries(level.locked).some(([vertex, color]) => colors[Number(vertex)] !== color)) return pending('Hãy giữ màu của các đỉnh khóa.')
     if (conflicts(level.edges, colors).length) return pending('Các cạnh đỏ nối hai đỉnh cùng màu. Hãy sửa chúng.')
     const optimum = exactColor(level)?.minimum
-    if (new Set(colors).size !== optimum) return pending('Tô hợp lệ, nhưng vẫn có thể giảm số màu.')
+    if (new Set(colors).size !== optimum) return pending('Mọi đường nối đều hợp lệ. Thử đổi các chấm đang dùng màu ít gặp sang các màu đã có để giảm tổng số màu.')
     return won('Bạn đã tô đúng bằng ' + optimum + ' màu, đạt tối ưu.')
   },
   solve: exactColor,

@@ -2,6 +2,7 @@ import { modeById } from './catalog'
 import type { ModeId } from './catalog'
 import type { Rank } from './core'
 import { questionAddress, questionFromKey } from '../questions/address'
+import { scoreBreakdown, scoreVersion } from './scoring'
 
 export const storageKey = 'combinatorics-arena-v1'
 export type Medal = 'gold' | 'silver' | 'bronze'
@@ -11,6 +12,8 @@ export interface Draft {
   hints: number
   elapsed: number
   done: boolean
+  timingStarted?: boolean
+  scoreVersion?: typeof scoreVersion
   updatedAt?: number
 }
 export interface Achievement {
@@ -20,6 +23,7 @@ export interface Achievement {
   bestTime: number
   leastHints: number
   completions: number
+  scoreVersion?: typeof scoreVersion
 }
 export interface Progress {
   version: 1
@@ -42,7 +46,8 @@ export const challengeKey = (mode: ModeId, rank: Rank, seed: string) => mode + '
 
 export function outcome(rank: Rank, moves: number, elapsed: number, hints: number): Achievement {
   return {
-    points: 1000 + 250 * rank - 150 * hints,
+    points: scoreBreakdown(rank, elapsed, hints).points,
+    scoreVersion,
     medal: hints === 0 ? 'gold' : hints === 1 ? 'silver' : 'bronze',
     bestMoves: moves,
     bestTime: elapsed,
@@ -55,7 +60,8 @@ export function withCompletion(progress: Progress, mode: ModeId, rank: Rank, see
   const key = challengeKey(mode, rank, seed)
   const previous = progress.achievements[key]
   const best: Achievement = previous ? {
-    points: Math.max(previous.points, current.points),
+    points: previous.scoreVersion === current.scoreVersion ? Math.max(previous.points, current.points) : current.points,
+    scoreVersion: current.scoreVersion,
     medal: previous.leastHints <= current.leastHints ? previous.medal : current.medal,
     bestMoves: Math.min(previous.bestMoves, current.bestMoves),
     bestTime: Math.min(previous.bestTime, current.bestTime),
@@ -124,6 +130,8 @@ function decodeDraft(value: unknown): Draft {
   }
   return {
     actions: value.actions, cursor: value.cursor, hints: value.hints, elapsed: value.elapsed, done: value.done,
+    ...(typeof value.timingStarted === 'boolean' ? { timingStarted: value.timingStarted } : {}),
+    ...(value.scoreVersion === scoreVersion ? { scoreVersion } : {}),
     ...(integer(value.updatedAt, 0, Number.MAX_SAFE_INTEGER) ? { updatedAt: value.updatedAt } : {}),
   }
 }
@@ -138,6 +146,7 @@ function decodeAchievement(value: unknown): Achievement {
   return {
     points: value.points, medal: value.medal, bestMoves: value.bestMoves, bestTime: value.bestTime,
     leastHints: value.leastHints, completions: value.completions,
+    ...(value.scoreVersion === scoreVersion ? { scoreVersion } : {}),
   }
 }
 

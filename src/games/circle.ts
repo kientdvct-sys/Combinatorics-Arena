@@ -2,6 +2,7 @@ import { isIndex, pending, seeded, won } from '../engine/core'
 import type { Challenge, Game } from '../engine/core'
 import { campaignVariant } from '../engine/campaign'
 import { extraCircle, extraTitles } from './bank'
+import { circleTask } from '../engine/lessons'
 
 export interface CircleLevel extends Challenge {
   size: number
@@ -82,9 +83,7 @@ export const circle: Game<CircleState, CircleAction, CircleLevel, ReturnType<typ
     const target = extra?.target ?? [3, 0, 5, 0, 7][rank]
     const level: CircleLevel = {
       title: extraTitles.circle[rank][variant - 1] ?? ['Chỗ ngồi cách nhau', 'Ghế đã giữ', 'Đếm quanh vòng', 'Hai đầu của một cung', 'Vòng tròn có điều kiện'][rank],
-      goal: mode === 'maximize' ? 'Chọn nhiều vị trí hợp lệ nhất.' : mode === 'count'
-        ? 'Tạo một cấu hình có ' + target + ' vị trí và nhập tổng số cấu hình hợp lệ.'
-        : 'Chọn đúng ' + target + ' vị trí hợp lệ.',
+      goal: circleTask(mode, target),
       complexity: ['Nhận ra cặp kề nhau qua điểm đầu và cuối.', 'Tối ưu khi có ghế bắt buộc và ghế cấm.', 'Đếm cấu hình có nhãn bằng công thức Kaplansky.', 'Chia vòng thành các đường đi với nhiều điều kiện biên.', 'Kết hợp các đoạn độc lập và đếm theo số vị trí đã chọn.'][rank],
       size, mode, target,
       required: rotate(extra?.required ?? (rank === 1 ? [2] : rank === 3 ? [2, 10, 14] : rank === 4 ? [1, 10] : [])),
@@ -107,18 +106,24 @@ export const circle: Game<CircleState, CircleAction, CircleLevel, ReturnType<typ
     return { ...state, chosen }
   },
   validate(level, state) {
-    if (!validChoice(level, state.chosen)) return pending('Sửa các vị trí được đánh dấu đỏ. Vị trí đầu và cuối cũng kề nhau.')
+    if (!validChoice(level, state.chosen)) return pending('Bỏ một ô trong mỗi cặp được đánh dấu đỏ. Ô ' + level.size + ' và ô 1 cũng đứng liền nhau.')
     const solution = solveCircle(level)
     const target = level.mode === 'maximize' ? solution.maximum : level.target
     if (state.chosen.length !== target) return pending(level.mode === 'maximize'
-      ? 'Vẫn có một cấu hình chọn được nhiều vị trí hơn.'
-      : 'Hãy chọn đúng số vị trí theo mục tiêu.')
-    if (level.mode === 'count' && (!state.answer || Number(state.answer) !== solution.count)) return pending('Cấu hình mẫu hợp lệ. Hãy kiểm tra lại tổng số cấu hình.')
+      ? 'Nhóm ' + state.chosen.length + ' ô của bạn hợp lệ. Hãy thử chọn thêm ô hoặc đổi nhóm để có nhiều ô hơn.'
+      : 'Bạn đang chọn ' + state.chosen.length + '/' + target + ' ô. ' +
+        (state.chosen.length < target ? 'Hãy chọn thêm ' + (target - state.chosen.length) + ' ô.' : 'Hãy bỏ bớt ' + (state.chosen.length - target) + ' ô.'))
+    if (level.mode === 'count' && (!state.answer || Number(state.answer) !== solution.count)) return pending(state.answer
+      ? 'Mẫu của bạn đúng. Hãy kiểm tra lại tổng số cách chọn. Cùng một nhóm ô chỉ tính một lần.'
+      : 'Mẫu của bạn đúng. Hãy điền tổng số cách chọn ở ô bên dưới vòng tròn.')
     return won(level.mode === 'count' ? 'Bạn đã dựng được cấu hình mẫu và đếm đúng.' : 'Cấu hình của bạn đạt mục tiêu.')
   },
   solve: solveCircle,
   hint(level, _state, tier) {
-    if (tier === 1) return 'Theo dõi cặp ở hai đầu dãy nhãn. Chúng nối nhau qua đường tròn.'
+    if (tier === 1) return 'Đi quanh vòng theo các số. Hai số đứng sát nhau, kể cả ' + level.size + ' và 1, không thể cùng được chọn.'
+    if (level.mode === 'construct') return tier === 2
+      ? 'Giữ nguyên các ô có chấm vàng. Khi tìm ô mới, bỏ qua ô có dấu × và hai ô sát mỗi ô đã chọn.'
+      : 'Thử đi quanh vòng và chọn cách một ô. Nếu hết chỗ trước khi đủ ' + level.target + ' ô, bỏ ô tự chọn đầu tiên và bắt đầu từ một ô khác.'
     if (tier === 2) return level.required.length || level.forbidden.length
       ? 'Loại vị trí cấm và hàng xóm của các vị trí bắt buộc. Các vị trí tự do còn lại tạo thành những đoạn rời nhau.'
       : 'Hãy biểu diễn khoảng trống sau mỗi vị trí đã chọn. Mỗi khoảng phải chứa ít nhất một vị trí trống.'
@@ -126,9 +131,13 @@ export const circle: Game<CircleState, CircleAction, CircleLevel, ReturnType<typ
     if (level.required.length || level.forbidden.length) return 'Nếu chọn j vị trí trên đoạn dài m thì có C(m−j+1, j) cách. Cộng theo cách phân bổ j giữa các đoạn.'
     return 'Đếm các cấu hình có đánh dấu một trong k vị trí đã chọn. Có n cách đặt dấu đầu tiên, sau đó đếm khoảng trống. Cuối cùng chia cho k.'
   },
-  explain(level) {
+  explain(level, state) {
+    if (level.mode === 'construct') {
+      const positions = [...state.chosen].sort((a, b) => a - b).map(index => index + 1).join(', ')
+      return 'Bạn đã chọn các ô ' + positions + '. Giữa mỗi cặp ô được chọn liên tiếp khi đi quanh vòng đều có ít nhất một ô khác. Ô cấm vẫn chiếm một vị trí, nên nó cũng có thể nằm giữa hai ô được chọn.'
+    }
     const solution = solveCircle(level)
-    if (level.mode === 'maximize') return 'Sau khi chọn các vị trí bắt buộc, bỏ các vị trí cấm và mọi hàng xóm của vị trí bắt buộc. Trên mỗi đoạn m vị trí còn lại, ghép thành từng cặp kề nhau để được cận trên ⌈m/2⌉. Chọn xen kẽ đạt cận. Tổng tối đa là ' + solution.maximum + '.'
+    if (level.mode === 'maximize') return 'Giữ ô bắt buộc. Gạch các ô cấm và hai ô đứng sát mỗi ô bắt buộc. Các ô có thể chọn thêm nằm trên từng đoạn rời. Trong mỗi đoạn, ghép lần lượt thành từng cặp đứng cạnh nhau. Mỗi cặp cho tối đa một ô, và có thể lấy thêm ô cuối nếu đoạn dài lẻ. Chọn xen kẽ đạt đúng giới hạn đó. Tổng tối đa của bài là ' + solution.maximum + ' ô.'
     if (!level.required.length && !level.forbidden.length) return 'Với n vị trí có nhãn và k vị trí được chọn, đánh dấu một vị trí được chọn rồi đếm k khoảng trống dương có tổng n−k. Mỗi cấu hình được đếm k lần. Kết quả là n/(n−k) × C(n−k,k) = ' + solution.count + '.'
     return 'Sau khi cố định các ghế bắt buộc, bỏ hàng xóm của chúng và các ghế cấm. Mỗi đoạn dài m đóng góp C(m−j+1,j) cấu hình chọn j ghế. Nhân theo các đoạn rồi cộng theo mọi phân bổ j có tổng thích hợp, được ' + solution.count + ' cấu hình.'
   },

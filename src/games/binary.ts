@@ -2,6 +2,7 @@ import { isIndex, pending, range, seeded, won } from '../engine/core'
 import type { Challenge, Game } from '../engine/core'
 import { campaignVariant } from '../engine/campaign'
 import { extraTitles } from './bank'
+import { binaryTask } from '../engine/lessons'
 
 export interface BinaryLevel extends Challenge { size: number; lights: number[]; optimum: number; requireOptimal: boolean }
 export interface BinaryState { lights: number[]; pressed: number[]; moves: number }
@@ -115,7 +116,7 @@ export const binary: Game<BinaryState, number, BinaryLevel, ReturnType<typeof so
     if (optimum < threshold) throw new Error('No sufficiently challenging Binary Matrix board found.')
     return {
       title: extraTitles.binary[rank][campaignVariant(seed) - 1] ?? ['Tắt đèn', 'Nhiều đường tắt', 'Tự do trong hệ nhị phân', 'Lời giải ngắn nhất', 'Tối ưu trên không gian nghiệm'][rank],
-      goal: requireOptimal ? 'Tắt mọi đèn bằng số lần bấm tối thiểu.' : 'Tắt tất cả đèn.',
+      goal: binaryTask(requireOptimal, optimum),
       complexity: ['Phân tích phạm vi thay đổi của mỗi ô.', 'Xử lý nhiều nghiệm do biến tự do.', 'Lập hệ phương trình trên GF(2) cho bảng 25 ô.', 'So sánh trọng số của mọi nghiệm.', 'Tìm nghiệm có ít nhất 9 thao tác và chứng nhận tối ưu.'][rank],
       size, lights, optimum, requireOptimal,
     }
@@ -135,7 +136,7 @@ export const binary: Game<BinaryState, number, BinaryLevel, ReturnType<typeof so
   solve: (level, state) => solveLights(level.size, state.lights),
   hint(level, state, tier) {
     if (tier === 1) return 'Bấm một ô hai lần triệt tiêu nhau. Thứ tự bấm không ảnh hưởng tới trạng thái cuối.'
-    if (tier === 2) return 'Gọi xᵢ là số lần bấm ô i theo modulo 2. Mỗi đèn cho một phương trình chứa ô đó và các ô kề cạnh.'
+    if (tier === 2) return 'Một đèn đang sáng phải được đổi trạng thái số lần lẻ. Một đèn đang tắt cần được đổi số lần chẵn. Với mỗi đèn, chỉ tính các lần bấm vào chính ô đó và các ô chung cạnh.'
     const result = solveLights(level.size, state.lights)
     const index = result?.vector.indexOf(1) ?? -1
     return index >= 0 ? 'Từ trạng thái hiện tại, một lời giải ngắn nhất có bấm ô hàng ' + (Math.floor(index / level.size) + 1) +
@@ -143,8 +144,7 @@ export const binary: Game<BinaryState, number, BinaryLevel, ReturnType<typeof so
   },
   explain(level) {
     const result = solveLights(level.size, level.lights)!
-    return 'Đặt xᵢ = 1 khi cần bấm ô i. Hệ Ax = b trên GF(2) mô tả các ô bị đảo. Khử Gauss cho hạng ' +
-      result.rank + ' và ' + result.nullity + ' biến tự do, nên màn gốc có ' + result.solutions +
-      ' nghiệm. Liệt kê các tổ hợp của cơ sở hạt nhân rồi cộng với một nghiệm riêng. Trọng số nhỏ nhất là ' + result.weight + ' lần bấm.'
+    return 'Để tắt hết đèn, mỗi đèn sáng ban đầu cần đổi số lần lẻ và mỗi đèn tắt cần đổi số lần chẵn. Bấm một ô hai lần triệt tiêu nhau, nên chỉ cần xét bấm hoặc bỏ qua từng ô. ' +
+      'Giải hệ chẵn lẻ bằng khử Gauss cho thấy bàn này có ' + result.solutions + ' cách chọn các ô cần bấm. Cách ngắn nhất cần ' + result.weight + ' lần bấm.'
   },
 }

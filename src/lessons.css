@@ -1,0 +1,76 @@
+.play-guide {
+  overflow: hidden;
+  margin-bottom: 16px;
+  line-height: 1.55;
+}
+.exercise-problem { padding: 18px 22px; }
+.exercise-problem > p, .exercise-problem > ul { max-width: 88ch; }
+.play-guide h2, .play-guide summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-weight: 750;
+}
+.play-guide h2 svg, .play-guide summary svg { flex: none; color: var(--accent); }
+.exercise-problem > p { margin-top: 6px; }
+.exercise-problem .exercise-task {
+  margin: 11px 0;
+  padding: 9px 12px;
+  border-inline-start: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  font-weight: 700;
+}
+.exercise-problem ul { display: grid; gap: 4px; padding-inline-start: 1.25rem; list-style: disc; }
+.exercise-problem li::marker { color: var(--accent); }
+.play-guide details { padding: 10px 22px; border-top: 1px solid var(--line); }
+.play-guide summary { cursor: pointer; list-style: none; }
+.play-guide summary::after {
+  content: '+';
+  margin-inline-start: auto;
+  color: var(--accent);
+}
+.play-guide details[open] > summary::after { content: '−'; }
+.play-guide ol { display: grid; gap: 4px; margin: 7px 0 8px; padding-inline-start: 1.35rem; list-style: decimal; }
+.play-guide ol li::marker { color: var(--accent); font-weight: 700; }
+.play-guide-example { color: var(--muted); font-size: .91rem; }
+.play-guide-example strong { color: var(--text); }
+.guide-theory { margin: 10px 0; }
+.guide-theory summary { color: var(--accent); cursor: pointer; font-weight: 650; }
+.level-guide-link { margin-bottom: 14px; }
+.play-metrics .play-current-score { color: var(--accent); }
+.score-rows { display: grid; gap: 5px; margin: 8px 0; font-variant-numeric: tabular-nums; }
+.score-rows div { display: flex; gap: 12px; justify-content: space-between; }
+.score-rows dt { color: var(--muted); }
+.score-rows dd { margin: 0; color: var(--text); font-weight: 700; }
+.result-panel .score-rows { max-width: 260px; }
+.score-card p + p { margin-top: 7px; }
+.check-feedback {
+  display: flex;
+  gap: 9px;
+  align-items: flex-start;
+  margin: 0 14px 14px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #efbd6d15;
+  color: #ffe0aa;
+  line-height: 1.45;
+}
+.check-feedback svg { flex: none; margin-top: 1px; }
+.circle-selection strong { color: #ffafbd; }
+.board-legend { display: flex; justify-content: center; gap: 12px; }
+.legend-color { border: 1px solid #526681; border-radius: 5px; padding: 1px 7px; color: var(--text); }
+.legend-color.color-a { background: #253b56; }
+.legend-color.color-b { background: #162538; }
+.svg-node.forbidden .forbidden-marker {
+  fill: #ffbcc8;
+  stroke: #191f2f;
+  stroke-width: 4px;
+  paint-order: stroke;
+  font-size: 15px;
+}
+@media (max-width: 720px) {
+  .exercise-problem { padding: 14px; }
+  .play-guide details { padding: 9px 14px; }
+}

@@ -2,6 +2,7 @@ import { isIndex, pending, range, seeded, won } from '../engine/core'
 import type { Challenge, Game } from '../engine/core'
 import { campaignVariant } from '../engine/campaign'
 import { extraDomino, extraTitles } from './bank'
+import { dominoTask } from '../engine/lessons'
 
 export interface DominoLevel extends Challenge {
   rows: number
@@ -96,7 +97,7 @@ export function validateProof(level: DominoLevel, state: DominoState) {
         parity(level, cell) !== parity(level, marks[0]))) return pending('Tập S phải gồm các ô có cùng màu và còn trên bàn.')
   const actual = [...new Set(marks.flatMap(cell => neighborsOf(level, cell)))]
   if (!sameSet(neighbors, actual)) return pending('Đánh dấu đúng toàn bộ hàng xóm kề cạnh của S vào tập N(S).')
-  if (actual.length >= marks.length) return pending('Tập này chưa thiếu hàng xóm. Tìm S sao cho |N(S)| < |S|.')
+  if (actual.length >= marks.length) return pending('Nhóm S có ' + marks.length + ' ô và có ' + actual.length + ' ô kề. Hãy tìm một nhóm có số ô kề ít hơn số ô trong nhóm.')
   return won('Chứng minh hợp lệ. ' + marks.length + ' ô trong S chỉ có ' + actual.length + ' hàng xóm khả dụng.')
 }
 
@@ -120,9 +121,7 @@ export const domino: Game<DominoState, DominoAction, DominoLevel, ReturnType<typ
     const objective = rank === 1 ? 'imbalance' : rank > 2 ? 'hall' : 'tile'
     const level: DominoLevel = {
       title: extraTitles.domino[rank][variant - 1] ?? ['Những ô khuyết', 'Bàn cờ mất góc', 'Nút thắt khi phủ', 'Thiếu hàng xóm', 'Chướng ngại cân bằng'][rank],
-      goal: objective === 'tile' ? 'Phủ kín tất cả các ô còn lại bằng domino 1 × 2.'
-        : objective === 'imbalance' ? 'Chứng minh không thể phủ bằng bất biến hai màu.'
-        : 'Tìm tập S cùng màu có ít hàng xóm kề cạnh hơn số ô trong S.',
+      goal: dominoTask(objective),
       complexity: ['Thử ghép ô kề nhau và giữ các ô góc.', 'Mỗi domino luôn chiếm đúng một ô mỗi màu.', 'Tránh để ô lẻ và túi ô cô lập khi phủ.', 'Hai màu cân bằng. Tìm thất bại cục bộ của điều kiện Hall.', 'Tìm chứng chỉ Hall qua nhiều đỉnh bị thắt cổ chai liên tiếp.'][rank],
       rows, cols, holes, objective,
     }
@@ -168,10 +167,12 @@ export const domino: Game<DominoState, DominoAction, DominoLevel, ReturnType<typ
   },
   solve: solveDomino,
   hint(level, _state, tier) {
-    if (tier === 1) return 'Tô hai màu. Quan sát các vùng bị thu hẹp bởi biên bàn hoặc ô khuyết.'
+    if (tier === 1) return level.objective === 'imbalance'
+      ? 'Bật «Tô hai màu», rồi đếm riêng số ô A và số ô B còn nguyên.'
+      : 'Bật «Tô hai màu». Bắt đầu bằng những ô ở sát mép bàn hoặc ngay cạnh ô bị khoét.'
     if (tier === 2) return level.objective === 'hall' ? 'Mỗi ô trong S cần một hàng xóm riêng biệt. Hãy tìm vài ô đang phải tranh cùng hàng xóm.'
       : 'Mỗi domino ghép hai ô kề cạnh, vì thế luôn lấy một ô mỗi màu.'
-    if (level.objective === 'imbalance') return 'Bàn ban đầu có số ô hai màu bằng nhau. So sánh màu của các ô mất để xác định màu còn dư.'
+    if (level.objective === 'imbalance') return 'Đếm toàn bộ ô A còn nguyên rồi đếm ô B còn nguyên. Hiệu hai số đếm là số ô chắc chắn thừa, vì mỗi quân đặt xuống lấy đi một ô của mỗi màu.'
     if (level.objective === 'hall') return 'Tìm các ô bậc một trước. Thêm các ô cùng màu có hàng xóm trùng với chúng và đếm lại N(S).'
     return 'Xử lý các ô chỉ có một hướng đặt trước. Giữ các ô ở biên khuyết có ít nhất một cách ghép.'
   },
@@ -182,6 +183,6 @@ export const domino: Game<DominoState, DominoAction, DominoLevel, ReturnType<typ
       const [a, b] = boardCounts(level)
       return 'Bàn còn ' + a + ' ô màu A và ' + b + ' ô màu B. Mỗi domino dùng một ô mỗi màu, nên bất biến hiệu số loại trừ mọi cách phủ.'
     }
-    return 'Mỗi ô trong S cần một đối tác riêng thuộc N(S). Khi |S| > |N(S)|, nguyên lý Dirichlet loại trừ cách ghép. Hai màu của bàn vẫn cân bằng. Bộ giải ghép cặp cực đại còn có thể tự dựng chứng chỉ qua các đường xen kẽ từ ô chưa ghép.'
+    return 'Mỗi ô đã đánh dấu trong nhóm S cần một ô kề riêng để đặt domino. Bạn đã tìm được một nhóm có ít ô kề hơn số ô trong nhóm, nên ít nhất một ô trong nhóm không thể ghép. Điều đó đủ để kết luận bàn không thể phủ kín.'
   },
 }

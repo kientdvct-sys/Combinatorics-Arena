@@ -1,4 +1,5 @@
 import { range, seeded } from '../engine/core'
+import { circleTask, nimTask } from '../engine/lessons'
 import type { Rank } from '../engine/core'
 import { winningNim } from '../games/nim'
 import type { NimLevel } from '../games/nim'
@@ -20,8 +21,7 @@ export function candidateNim(rank: Rank, trial: number): Candidate<NimLevel> | u
   const level: NimLevel = {
     piles, rule, limit,
     title: ['Ba đống đá', 'Mở đầu có chiến lược', 'Thế cờ nhiều đống', 'Ai lấy viên cuối?', 'Lượt lấy giới hạn'][rank],
-    goal: rule === 'bounded' ? 'Mỗi lượt lấy 1–' + limit + ' viên trong một đống. Hãy giành viên cuối.'
-      : rule === 'misere' ? 'Ép đối thủ lấy viên cuối cùng.' : 'Hãy lấy viên đá cuối cùng trước đối thủ.',
+    goal: nimTask(rule),
     complexity: piles.join(' · ') + ' viên ở các đống',
   }
   return { level, signature: [rule, limit, ...[...piles].sort((a, b) => a - b)].join(':') }
@@ -44,8 +44,7 @@ export function candidateCircle(rank: Rank, trial: number): Candidate<CircleLeve
     random.integer([1, 2, 0, 3, 2][rank], [4, 4, 4, 6, 6][rank]), random)
   const level: CircleLevel = {
     title: mode === 'construct' ? 'Xếp chỗ quanh vòng' : mode === 'maximize' ? 'Tối đa ghế khả dụng' : 'Đếm cấu hình vòng tròn',
-    goal: mode === 'construct' ? 'Chọn ' + target + ' vị trí hợp lệ, không kề nhau.' : mode === 'maximize'
-      ? 'Chọn nhiều vị trí hợp lệ nhất.' : 'Chọn mẫu gồm ' + target + ' vị trí và nhập tổng số cấu hình.',
+    goal: circleTask(mode, target),
     complexity: size + ' vị trí · ' + required.length + ' bắt buộc · ' + forbidden.length + ' bị cấm',
     size, required, forbidden, mode, target,
   }

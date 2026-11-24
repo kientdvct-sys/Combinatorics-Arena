@@ -2,6 +2,7 @@ import { record, start, undo } from './core'
 import type { Challenge, Game, History, Result } from './core'
 import { isRecord } from './storage'
 import type { Draft } from './storage'
+import { scoreVersion } from './scoring'
 
 export interface Frame<S, A> { state: S; action: A | null }
 type Parser<A> = (value: unknown) => A | undefined
@@ -22,10 +23,10 @@ export function restore<S, A, L extends Challenge>(game: Game<S, A, L>, level: L
   return history
 }
 
-export function toDraft<S, A>(history: History<Frame<S, A>>, elapsed: number, hints: number, result: Result | null): Draft {
+export function toDraft<S, A>(history: History<Frame<S, A>>, elapsed: number, hints: number, result: Result | null, timingStarted = elapsed > 0): Draft {
   return {
     actions: [...history.past, history.current, ...history.future].slice(1).map(frame => frame.action),
-    cursor: history.past.length, elapsed, hints, done: result?.status === 'won',
+    cursor: history.past.length, elapsed, hints, done: result?.status === 'won', timingStarted, scoreVersion,
   }
 }
 

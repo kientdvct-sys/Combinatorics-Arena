@@ -89,15 +89,18 @@ export function CircleBoard({ level, state, dispatch, disabled }: BoardProps<Cir
     return [230 + 158 * Math.cos(theta), 200 + 158 * Math.sin(theta)]
   })
   const invalid = (index: number) => state.chosen.some(other => adjacent(index, other, level.size))
+  const clashes = state.chosen.flatMap((a, index) => state.chosen.slice(index + 1)
+    .filter(b => adjacent(a, b, level.size)).map(b => [a, b] as const))
+  const chosen = [...state.chosen].sort((a, b) => a - b).map(index => index + 1)
   const nodeRadius = level.size > 14 ? 18 : 22
   return <div className="board-content">
     <BoardSvg label="Bàn vòng tròn">
       <circle cx="230" cy="200" r="158" className="board-guide" />
       <circle cx="230" cy="200" r="116" className="board-guide board-guide-dash" />
-      <text x="230" y="203" className="svg-tally">{state.chosen.length}</text>
+      <text x="230" y="203" className="svg-tally">{level.mode === 'maximize' ? chosen.length : chosen.length + '/' + level.target}</text>
       <text x="230" y="231" className="svg-caption">VỊ TRÍ ĐÃ CHỌN</text>
-      {state.chosen.flatMap((a, index) => state.chosen.slice(index + 1).filter(b => adjacent(a, b, level.size)).map(b =>
-        <line key={a + ':' + b} x1={coordinates[a][0]} y1={coordinates[a][1]} x2={coordinates[b][0]} y2={coordinates[b][1]} className="illegal-edge" />))}
+      {clashes.map(([a, b]) =>
+        <line key={a + ':' + b} x1={coordinates[a][0]} y1={coordinates[a][1]} x2={coordinates[b][0]} y2={coordinates[b][1]} className="illegal-edge" />)}
       {coordinates.map(([x, y], index) => {
         const selected = state.chosen.includes(index)
         const isLocked = level.required.includes(index)
@@ -109,14 +112,22 @@ export function CircleBoard({ level, state, dispatch, disabled }: BoardProps<Cir
           role="button" tabIndex={inactive ? -1 : 0} aria-pressed={selected} aria-disabled={inactive}
           aria-label={'Vị trí ' + (index + 1) + (isLocked ? ' · bắt buộc' : forbidden ? ' · bị cấm' : '')}
           onClick={onClick} onKeyDown={event => activate(event, onClick)}>
-          <circle r={nodeRadius} /><text y="1">{forbidden ? '×' : index + 1}</text>
+          <circle r={nodeRadius} /><text y="1">{index + 1}</text>
+          {forbidden && <text className="forbidden-marker" x={nodeRadius - 3} y={-nodeRadius + 1} aria-hidden="true">×</text>}
           {isLocked && <circle cx={nodeRadius - 3} cy={-nodeRadius + 4} r="5" className="locked-dot" />}
         </g>
       })}
     </BoardSvg>
-    {(level.required.length > 0 || level.forbidden.length > 0) && <p className="board-note"><span className="legend-dot gold" /> Bắt buộc <span className="legend-cross">×</span> Bị cấm</p>}
-    {level.mode === 'count' && <label className="field inline-field">Tổng số cấu hình
-      <input aria-label="Tổng số cấu hình" disabled={disabled} inputMode="numeric" maxLength={9} value={state.answer}
+    <p className="board-note circle-selection" aria-live="polite">
+      {chosen.length ? 'Ô đã chọn gồm ' + chosen.join(', ') + '.' : 'Bạn chưa chọn ô nào.'}
+      {clashes.length > 0 && <strong> Cặp đứng liền nhau {clashes.map(([a, b]) => (a + 1) + ' và ' + (b + 1)).join(', ')}. Bỏ một ô trong mỗi cặp đỏ.</strong>}
+    </p>
+    {(level.required.length > 0 || level.forbidden.length > 0) && <div className="board-note board-legend">
+      {level.required.length > 0 && <span><span className="legend-dot gold" /> Ô bắt buộc</span>}
+      {level.forbidden.length > 0 && <span><b aria-hidden="true">× </b> Ô bị cấm</span>}
+    </div>}
+    {level.mode === 'count' && <label className="field inline-field">Có tất cả bao nhiêu cách chọn {level.target} ô?
+      <input disabled={disabled} inputMode="numeric" maxLength={9} value={state.answer}
         onChange={event => dispatch({ type: 'answer', value: event.target.value })} />
     </label>}
   </div>
@@ -144,7 +155,7 @@ export function GraphBoard({ level, state, dispatch, disabled }: BoardProps<Grap
   const bad = new Set(conflicts(level.edges, state))
   const positions = range(level.size).map(vertex => vertexPosition(level, vertex))
   return <div className="board-content">
-    <div className="board-topline"><span>BẢNG MÀU</span><b>{new Set(state.filter(color => color >= 0)).size} màu đang dùng</b></div>
+    <div className="board-topline"><span>BẢNG MÀU</span><b>{state.filter(color => color >= 0).length}/{level.size} chấm đã tô · {new Set(state.filter(color => color >= 0)).size} màu</b></div>
     <div className="color-picker" role="group" aria-label="Bảng màu">
       {palette.slice(0, level.palette).map((color, index) => <button type="button" className="color-option"
         key={color} title={colorNames[index]} style={{ '--swatch': color } as CSSProperties}
@@ -174,7 +185,9 @@ export function GraphBoard({ level, state, dispatch, disabled }: BoardProps<Grap
         </g>
       })}
     </BoardSvg>
-    <p className="board-note" aria-live="polite">{bad.size ? bad.size + ' cạnh vi phạm' : 'Chọn màu rồi bấm vào một đỉnh.'}</p>
+    <p className="board-note" aria-live="polite">{bad.size
+      ? bad.size + ' cạnh vi phạm. Đổi màu một đầu của mỗi đường đỏ.'
+      : (activeColor < 0 ? 'Đang dùng cục tẩy.' : 'Đang chọn màu ' + colorNames[activeColor] + '. Bấm vào chấm muốn tô.')}</p>
   </div>
 }
 
@@ -195,18 +208,20 @@ export function DominoBoard({ level, state, dispatch, disabled }: BoardProps<Dom
     else place(cell)
   }
   return <div className="board-content">
-    <div className="board-topline"><span>{proof ? 'CHỨNG MINH' : 'BÀN DOMINO'}</span><b>{proof ? 'Kiểm tra từng bước' : covered.size + ' ô đã phủ'}</b></div>
+    <div className="board-topline"><span>{proof ? 'CHỨNG MINH' : 'BÀN DOMINO'}</span><b>{proof ? 'Đánh dấu các ô theo yêu cầu'
+      : covered.size + '/' + (level.cols * level.rows - level.holes.length) + ' ô đã phủ'}</b></div>
     <div className="board-controls domino-controls">
       {!proof && <>
         <div className={'domino-tray' + (vertical ? ' vertical' : '')} title="Kéo quân vào ô đầu tiên" aria-hidden="true" draggable={!disabled}
           onDragStart={event => { event.dataTransfer.setData('application/x-arena-domino', '1'); event.dataTransfer.effectAllowed = 'copy' }}><i /><i /></div>
-        <button type="button" onClick={() => setVertical(!vertical)} disabled={disabled} className="btn btn-quiet">
+        <button type="button" onClick={() => setVertical(!vertical)} disabled={disabled} className="btn btn-quiet" title={vertical ? 'Đang đặt dọc' : 'Đang đặt ngang'}>
           <RotateCw size={16} /> {vertical ? 'Xoay ngang' : 'Xoay dọc'}
         </button>
       </>}
       <button type="button" className="btn btn-quiet" aria-pressed={state.checkered} disabled={disabled}
         onClick={() => { setMessage(''); dispatch({ type: 'checker' }) }}><Grid2X2 size={16} /> Tô hai màu</button>
     </div>
+    {state.checkered && <div className="board-note board-legend"><span className="legend-color color-a">A</span><span className="legend-color color-b">B</span></div>}
     {level.objective === 'hall' && <div className="board-controls proof-tools">
       <button type="button" className="btn btn-quiet" aria-pressed={proofTool === 'mark'} onClick={() => setProofTool('mark')} disabled={disabled}>Chọn S · {state.proof.marks.length}</button>
       <button type="button" className="btn btn-quiet" aria-pressed={proofTool === 'neighbor'} onClick={() => setProofTool('neighbor')} disabled={disabled}>Chọn N(S) · {state.proof.neighbors.length}</button>
@@ -238,15 +253,16 @@ export function DominoBoard({ level, state, dispatch, disabled }: BoardProps<Dom
         disabled={disabled} onClick={() => dispatch({ type: 'side', cell: side })}>Màu {side === 0 ? 'A' : 'B'} còn nhiều hơn</button>)}
     </div>}
     <p className={message ? 'board-note invalid-note' : 'board-note'} aria-live="polite">{message || (level.objective === 'hall' ?
-      'Chọn các ô cùng màu trong S, rồi đánh dấu tất cả ô kề cạnh thuộc N(S).' :
-      level.objective === 'imbalance' ? 'Đánh dấu ô khuyết, rồi xác định màu còn nhiều ô hơn.' : 'Bấm domino đã đặt để gỡ nó.')}</p>
+      (proofTool === 'mark' ? 'Đang chọn nhóm S. Chỉ đánh dấu các ô cùng màu.' : 'Đang chọn hàng xóm N(S). Đánh dấu các ô có chung cạnh với nhóm S.') :
+      level.objective === 'imbalance' ? 'Đã đánh dấu ' + state.proof.marks.length + '/' + level.holes.length + ' ô khuyết.'
+        : (vertical ? 'Đặt dọc từ ô phía trên.' : 'Đặt ngang từ ô bên trái.') + ' Bấm domino đã đặt để gỡ.')}</p>
   </div>
 }
 
 export function BinaryBoard({ level, state, dispatch, disabled }: BoardProps<BinaryState, number, BinaryLevel>) {
   const lights = state.lights.filter(Boolean).length
   return <div className="board-content">
-    <div className="board-topline"><span>{level.size} × {level.size}</span><b>{lights} đèn đang bật</b></div>
+    <div className="board-topline"><span>{level.size} × {level.size}</span><b>{lights} đèn đang bật{level.requireOptimal ? ' · ' + state.moves + '/' + level.optimum + ' lần bấm' : ''}</b></div>
     <div className="square-grid binary-grid" style={{ '--cols': level.size } as CSSProperties}>
       {state.lights.map((on, cell) => <motion.button type="button" key={cell} className={'grid-square light-square' + (on ? ' light-on' : '')}
         whileTap={{ scale: 0.92 }} aria-label={'Đèn ' + (Math.floor(cell / level.size) + 1) + ', ' + (cell % level.size + 1)}

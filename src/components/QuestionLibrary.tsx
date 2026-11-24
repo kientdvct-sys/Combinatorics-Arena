@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ArrowRight, BookOpen, Check, Shuffle } from 'lucide-react'
+import { ArrowRight, Check, Shuffle } from 'lucide-react'
 import { modeById, modes } from '../engine/catalog'
 import type { ModeId } from '../engine/catalog'
 import { range, ranks } from '../engine/core'
+import { describeLesson } from '../engine/lessons'
 import type { Rank } from '../engine/core'
 import { useProgress } from '../engine/progressStore'
 import { challengeKey } from '../engine/storage'
@@ -23,6 +24,7 @@ type CompletionFilter = 'all' | 'unsolved' | 'solved' | 'saved'
 function QuestionCard({ question, completed }: { question: QuestionAddress; completed: boolean }) {
   const mode = modeById(question.mode)!
   const level = useMemo(() => questionPreview(question), [question])
+  const lesson = describeLesson(level)
   return <article className="question-card" style={accentStyle(mode.color)}>
     <a href={questionLink(question)} aria-label={'Mở bài ' + questionCode(question.number) + ' · ' + level.title}>
       <div className="question-card-top">
@@ -31,12 +33,17 @@ function QuestionCard({ question, completed }: { question: QuestionAddress; comp
       </div>
       <p className="question-type">{mode.name} <span>·</span> {ranks[question.rank]}</p>
       <h2>{level.title}</h2>
-      <p className="question-goal">{level.goal}</p>
+      <p className="question-goal">{lesson.task}</p>
       <div className="question-card-foot">
         {completed ? <span className="question-done"><Check size={15} /> Đã giải</span> : <span>{level.complexity}</span>}
         <span className="question-arrow"><ArrowRight size={17} /></span>
       </div>
     </a>
+    <details className="question-preview">
+      <summary>Đọc đề</summary>
+      <p>{lesson.setup}</p>
+      <ul>{lesson.rules.map(rule => <li key={rule}>{rule}</li>)}</ul>
+    </details>
     <BookmarkButton number={question.number} />
   </article>
 }
@@ -85,9 +92,8 @@ export function QuestionLibrary({ defaultMode, defaultRank, defaultCompletion = 
   return <section className="subpage question-library">
     <header className="library-banner">
       <div className="library-banner-copy">
-        <p className="eyebrow"><BookOpen size={15} /> NGÂN HÀNG BÀI TẬP</p>
-        <h1>{formatCount(questionCount)} bài toán.</h1>
-        <p>Luyện tổ hợp qua năm đấu trường tương tác, từ tìm quy luật đến chứng minh tối ưu.</p>
+        <h1>Ngân hàng bài tập</h1>
+        <p>{formatCount(questionCount)} bài để luyện suy luận, từ làm quen với luật chơi đến tự tìm cách giải tối ưu.</p>
         <button type="button" className="btn btn-primary" disabled={!matches.length} onClick={openRandom}><Shuffle size={17} /> Chơi bài ngẫu nhiên</button>
       </div>
       <div className="library-banner-progress">

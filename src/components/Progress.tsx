@@ -72,7 +72,8 @@ export function ProgressPage() {
             return <tr key={key}><th scope="row"><a className="text-link" href={'#/play/' + id + '/' + tier + '/' + encodeURIComponent(seed)}>
               {label} · {ranks[Number(tier)]}{detail}</a></th>
               <td className={'medal-' + info.medal}>{medalLabels[info.medal]}</td><td>{info.bestMoves}</td>
-              <td>{formatTime(info.bestTime)}</td><td>{info.leastHints}</td><td>{info.points}</td></tr>
+              <td>{formatTime(info.bestTime)}</td><td>{info.leastHints}</td>
+              <td>{info.points}{info.scoreVersion === undefined && <small className="muted"> · luật cũ</small>}</td></tr>
           })}</tbody></table></div>}
       <Pagination page={activePage} pageCount={pageCount} select={setPage} />
     </div>

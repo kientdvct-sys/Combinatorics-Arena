@@ -3,7 +3,7 @@ import { expect, test } from './fixtures'
 test('plays the homepage demo and resumes a saved campaign round', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 })
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: /Chơi một ván/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Đấu trường tổ hợp' })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390)
   const preview = page.getByRole('group', { name: 'Bàn đèn chơi thử' })
   await preview.getByRole('button', { name: 'Đèn thử hàng 1 cột 1' }).click()

@@ -1,5 +1,6 @@
 import { range, seeded } from '../engine/core'
 import type { Rank } from '../engine/core'
+import { binaryTask } from '../engine/lessons'
 import { affected, solveLights } from '../games/binary'
 import type { BinaryLevel } from '../games/binary'
 import { gridSignature, sample } from './sampling'
@@ -18,7 +19,7 @@ export function candidateBinary(rank: Rank, trial: number): Candidate<BinaryLeve
   const requireOptimal = rank >= 3
   const level: BinaryLevel = {
     title: requireOptimal ? 'Tắt đèn với ít lượt bấm nhất' : 'Giải bảng đèn',
-    goal: requireOptimal ? 'Tắt hết đèn bằng số lượt bấm ít nhất.' : 'Tắt hết các đèn trên bảng.',
+    goal: binaryTask(requireOptimal, solution.weight),
     complexity: size + ' × ' + size + ' · ' + lights.filter(Boolean).length + ' đèn đang sáng',
     size, lights, optimum: solution.weight, requireOptimal,
   }

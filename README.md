@@ -2,6 +2,8 @@
 
 Web game chiến thuật và logic toán học dành cho học sinh yêu thích tổ hợp. Năm đấu trường có 100 bài chiến dịch và 11.000 bài luyện, tổng cộng 11.100 bài. Chiến dịch có bốn bài mỗi cấp. Hoàn thành một bài chiến dịch để mở cấp tiếp theo trong cùng đấu trường.
 
+Mỗi bài mở đầu bằng **Đề bài**. Phần này mô tả bàn hiện tại, nêu yêu cầu cần giải và liệt kê điều kiện với dữ kiện của đúng bài đang mở. Mục **Đọc đề** trên thẻ bài luyện cho phép xem đề trước khi vào bàn. Trên máy tính, đề và bàn chơi nằm cạnh nhau. Trên điện thoại, đề nằm trước bàn. Người mới có thể mở **Cách làm trên bàn và ví dụ**. Vòng tròn giữ số thứ tự ở cả ô cấm và đánh dấu từng cặp ô đang xung đột.
+
 Trang chủ có bàn Binary Matrix chơi thử, lối tắt về ván đang dở, bài đã lưu và thành tích. Từ **Đấu trường**, mở thẳng **Bài luyện** dưới mỗi chế độ hoặc chơi **Thử thách hôm nay**. Nút dấu trang lưu bài vào hồ sơ đang dùng. Mở **Bài đã lưu** để quay lại danh sách.
 
 Mở **Bài tập** để luyện ở bất kỳ cấp nào. Có thể lọc theo đấu trường, cấp độ và trạng thái đã giải, mở thẳng mã #00001–#11000 hoặc chơi một bài ngẫu nhiên trong bộ lọc. Kết quả bài luyện được lưu trong hồ sơ. Với bài luyện đã xong, trò chơi giữ lại trạng thái bàn của 24 bài gần nhất và lưu kỷ lục của tất cả bài đã giải.
@@ -96,7 +98,15 @@ Mật khẩu được dẫn xuất bằng Web Crypto PBKDF2-HMAC-SHA256, với s
 | Domino Invariant | Xoay, bấm hoặc kéo quân vào bàn. Màn bất khả thi yêu cầu chứng minh trên ô. | Ghép cặp cực đại hai phía, kiểm tra chênh màu hoặc chứng chỉ Hall. |
 | Binary Matrix | Lật ô và láng giềng, tắt đèn. Hai màn cuối yêu cầu số bước tối ưu. | Khử Gauss GF(2), rồi duyệt các tổ hợp của cơ sở hạt nhân để tìm trọng số nhỏ nhất. |
 
-Mã seed tạo lại cùng một thử thách với cùng luật và cấp. Các biến thể dùng kích thước, thứ tự, phản chiếu, màu khóa hoặc chuỗi xáo trộn tùy chế độ. Mỗi màn được bộ giải kiểm tra khi sinh. Mỗi gợi ý trừ 150 điểm. Hoàn tác trong Nim có thể bật hoặc tắt từ trang Thành tích.
+Mã seed tạo lại cùng một thử thách với cùng luật và cấp. Các biến thể dùng kích thước, thứ tự, phản chiếu, màu khóa hoặc chuỗi xáo trộn tùy chế độ. Mỗi màn được bộ giải kiểm tra khi sinh. Hoàn tác trong Nim có thể bật hoặc tắt từ trang Thành tích.
+
+## Tính điểm
+
+Điểm ban đầu theo năm cấp lần lượt là 1.000, 1.250, 1.500, 1.750 và 2.000. Mỗi giây tròn trừ 1 điểm, mỗi gợi ý trừ 150 điểm. Điểm thấp nhất là 0. Ví dụ, một bài Apprentice mất 42 giây và một gợi ý cho 808 điểm.
+
+Đồng hồ bắt đầu từ thao tác hợp lệ đầu tiên trên bài, lần mở gợi ý đầu tiên hoặc lần bấm **Kiểm tra** đầu tiên. Đồng hồ tạm dừng khi tab bị ẩn và tiếp tục khi quay lại. Trò chơi chốt điểm khi bài được kiểm tra thành công. Kiểm tra sai không trừ khoản riêng. **Chơi lại** đặt đồng hồ về 0 và giữ số gợi ý đã dùng. Huy chương Vàng, Bạc và Đồng tương ứng với 0, 1 và từ 2 gợi ý.
+
+Thành tích lưu trước v1.6 hiển thị điểm theo luật cũ cho tới khi người chơi giải lại bài. Khi đó hệ thống lưu kỷ lục điểm theo luật mới, đồng thời giữ số lần hoàn thành, huy chương, thời gian nhanh nhất và số bước ít nhất đã ghi nhận.
 
 ## Cấu trúc
 

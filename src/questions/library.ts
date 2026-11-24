@@ -1,4 +1,5 @@
 import type { Challenge, Game } from '../engine/core'
+import type { ArenaLevel } from '../engine/lessons'
 import type { QuestionAddress } from './address'
 import { questionsPerRank, readQuestion } from './address'
 import { candidates } from './candidates'
@@ -12,7 +13,7 @@ function trialFor(address: QuestionAddress) {
     : extra[address.mode][address.rank][address.index - questionsPerRank]
 }
 
-export function questionPreview(address: QuestionAddress): Challenge {
+export function questionPreview(address: QuestionAddress): ArenaLevel {
   const result = candidates[address.mode](address.rank, trialFor(address))
   if (!result) throw new Error('Question index points to an invalid exercise: ' + address.number)
   return result.level
