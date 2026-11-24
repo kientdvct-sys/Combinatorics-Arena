@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.vercel/
+playwright-report/
+test-results/
+*.local
+.env
+.env.*
+!.env.example
+admin.json
+admin-backup-*.json
+.combinatorics-arena/

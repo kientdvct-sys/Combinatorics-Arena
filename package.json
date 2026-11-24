@@ -1,0 +1,41 @@
+{
+  "name": "combinatorics-arena",
+  "version": "1.5.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^22.12.0 || ^24.0.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "start": "node server/start.mjs",
+    "admin:setup": "node server/setup.mjs",
+    "admin:vercel": "node server/prepare-vercel-admin.mjs",
+    "verify:dist": "node scripts/verify-public-build.mjs",
+    "build": "tsc --noEmit && vite build && npm run verify:dist",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:server": "node --test tests/server/*.test.mjs",
+    "generate:questions": "node scripts/generate-questions.mjs",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "lucide-react": "0.577.0",
+    "motion": "12.42.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zustand": "5.0.14"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.62.1",
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "22.20.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.0.3",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vite": "8.3.4",
+    "vitest": "4.1.10"
+  }
+}
